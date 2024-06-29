@@ -51,7 +51,7 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    parse_macro_input, parse_quote, Attribute, Field, FnArg, Ident, ItemStruct, ItemTrait, Meta, TraitItem, TraitItemFn, TraitItemType
+    parse_macro_input, parse_quote, spanned::Spanned, Attribute, Field, FnArg, Ident, ItemStruct, ItemTrait, Meta, TraitItem, TraitItemFn, TraitItemType
 };
 
 #[proc_macro_attribute]
@@ -97,10 +97,16 @@ fn generate_delegation_function(f: &TraitItemFn) -> Option<TraitItem>{
     let name = &sig.ident;
     let first_argument = sig.inputs.first()?;
     let delegate_fn_ident = delegate_fn_ident(first_argument)?;
+    let inputs_variables: Vec<_> = sig.inputs.iter().filter_map(|input| {
+            match input {
+                FnArg::Typed(typed) => Some(Ident::new(typed.pat.to_token_stream().to_string().as_str(), typed.pat.span())),
+                _ => None
+            }
+        }).collect();
     Some(TraitItem::Fn(parse_quote! {
         #[inline(always)]
         #sig {
-            return self.#delegate_fn_ident().#name()
+            return self.#delegate_fn_ident().#name(#(#inputs_variables)*)
         }
     }))
 }

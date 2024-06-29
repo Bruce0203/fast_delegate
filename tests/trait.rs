@@ -9,7 +9,7 @@ pub trait Delegate {
 
 #[delegate]
 pub trait Delegate2 {
-    fn run2(&self);
+    fn run2(&self, value: usize);
 }
 
 #[derive(Delegate)]
@@ -29,7 +29,7 @@ impl Delegate for DelegateImpl {
 
 pub struct Delegate2Impl;
 impl Delegate2 for Delegate2Impl {
-    fn run2(&self) {
+    fn run2(&self, value: usize) {
         println!("Delegate2");
     }
 }
@@ -41,5 +41,5 @@ fn delegate_test() {
         entity2: Delegate2Impl {},
     };
     player.run();
-    player.run2();
+    player.run2(123);
 }

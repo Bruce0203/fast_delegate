@@ -18,7 +18,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 description = "delegate struct easy"
 edition = "2021"
 author = "Bruce0203 <brucefreedy@gmail.com>"
@@ -26,7 +26,7 @@ repository = "https://github.com/Bruce0203/delegare"
 license = "MIT"
 
 [dependencies]
-delegare_derive = { path = "./impl", version = "0.1.0" }
+delegare_derive = { path = "./impl", version = "0.2.0" }
 
 [[bench]]
 name = "compare"
