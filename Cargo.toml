@@ -2,9 +2,7 @@
 name = "delegare"
 version = "0.1.0"
 edition = "2021"
-author = "Bruce0203 <brucefreedy@gmail.com>"
-repository = "https://github.com/Bruce0203/delegare"
-license = "MIT"
+description.workspace = true
 readme = "./README.md"
 include = [
     "**/*.rs",
@@ -15,6 +13,14 @@ include = [
 members = [
     "impl"
 ]
+
+[workspace.package]
+version = "0.1.0"
+description = "delegate struct easy"
+edition = "2021"
+author = "Bruce0203 <brucefreedy@gmail.com>"
+repository = "https://github.com/Bruce0203/delegare"
+license = "MIT"
 
 [dependencies]
 delegare_derive = { path = "./impl", version = "0.1.0" }
