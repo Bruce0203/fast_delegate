@@ -1,3 +1,5 @@
+use std::hint::black_box;
+
 ///! This library is nightly-only as it relies on `associated_type_defaults`
 ///! 
 ///! # example of this crate
@@ -51,7 +53,7 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    parse_macro_input, parse_quote, spanned::Spanned, Attribute, Field, FnArg, Ident, ItemStruct, ItemTrait, Meta, TraitItem, TraitItemFn, TraitItemType
+    parse_macro_input, parse_quote, spanned::Spanned, Attribute, Field, FnArg, Ident, ItemStruct, ItemTrait, Meta, TraitItem, TraitItemFn, TraitItemType, WhereClause
 };
 
 #[proc_macro_attribute]
@@ -69,21 +71,27 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
         .collect();
 
     let name = &item_trait.ident;
+    let params = &item_trait.generics.params;
     let token: Ident = format_ident!("__InternalDelegareToken{}", name);
     let internal_type: TraitItemType = parse_quote! {
         type __Internal = #token;
     };
+    item_trait.items.push(TraitItem::Type(internal_type));
 
-    item_trait.items.push(syn::TraitItem::Type(internal_type));
+    let where_clause = item_trait.generics.where_clause.clone().map(|v| v.predicates);
+    let where_clause: WhereClause = parse_quote! {
+        where
+            T: delegare::Delegatable<#token>,
+            T::Target: #name<#params>,
+            #where_clause
 
+    };
     quote! {
         #item_trait
 
         pub struct #token;
-        impl<T> #name for T
-        where
-            T: delegare::Delegatable<#token>,
-            T::Target: #name,
+        impl<T, #params> #name<#params> for T
+            #where_clause
         {
             #(#delegation_functions)*
         }
@@ -173,12 +181,9 @@ fn generate_delegatable_for_field(struct_name: &Ident,field: &Field) -> Option<V
     })
 }
 
-fn trait_names(to_attr: &Attribute) -> Option<Vec<Ident>> {
-    let mut tokens = proc_macro2::TokenStream::new();
-    to_attr.to_tokens(&mut tokens);
-
+fn trait_names(attr: &Attribute) -> Option<Vec<Ident>> {
     let mut trait_names: Vec<Ident> = Vec::new();
-    to_attr
+    attr
         .parse_nested_meta(|meta| {
             meta.path
                 .segments
