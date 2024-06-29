@@ -1,10 +1,8 @@
 use criterion::Criterion;
 
 fn compare(c: &mut Criterion) {
-    c.bench_function("handwritten", |b| {
-        b.iter(|| {
-
-        });
+    c.bench_function("bench", |b| {
+        b.iter(|| todo!());
     });
 }
 

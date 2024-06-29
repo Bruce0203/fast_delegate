@@ -1,0 +1,48 @@
+#![feature(associated_type_defaults)]
+
+use std::str::FromStr;
+
+use delegare_derive::{delegate, Delegate};
+
+#[delegate]
+pub trait Delegate {
+    fn run(&self);
+}
+
+#[delegate]
+pub trait Delegate2 {
+    fn run2(&self);
+}
+
+pub struct DelegateImpl;
+
+pub struct Delegate2Impl;
+
+impl Delegate for DelegateImpl {
+    fn run(&self) {
+        println!("Delegate");
+    }
+}
+
+impl Delegate2 for Delegate2Impl {
+    fn run2(&self) {
+        println!("Delegate2");
+    }
+}
+
+#[derive(Delegate)]
+pub struct Delegated {
+    #[to(Delegate)]
+    entity: DelegateImpl,
+    #[to(Delegate2)]
+    entity2: Delegate2Impl,
+}
+
+fn main() {
+    let player = Delegated {
+        entity: DelegateImpl {},
+        entity2: Delegate2Impl {},
+    };
+    player.run();
+    player.run2();
+}
