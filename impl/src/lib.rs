@@ -1,5 +1,3 @@
-use std::hint::black_box;
-
 ///! This library is nightly-only as it relies on `associated_type_defaults`
 ///! 
 ///! # example of this crate
@@ -71,7 +69,7 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
         .collect();
 
     let name = &item_trait.ident;
-    let params = &item_trait.generics.params;
+    let generic_params = &item_trait.generics.params;
     let token: Ident = format_ident!("__InternalDelegareToken{}", name);
     let internal_type: TraitItemType = parse_quote! {
         type __Internal = #token;
@@ -82,7 +80,7 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let where_clause: WhereClause = parse_quote! {
         where
             T: delegare::Delegatable<#token>,
-            T::Target: #name<#params>,
+            T::Target: #name<#generic_params>,
             #where_clause
 
     };
@@ -90,7 +88,7 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
         #item_trait
 
         pub struct #token;
-        impl<T, #params> #name<#params> for T
+        impl<T, #generic_params> #name<#generic_params> for T
             #where_clause
         {
             #(#delegation_functions)*
@@ -140,13 +138,13 @@ pub fn derive_delegate(input: TokenStream) -> TokenStream {
         .fields
         .iter()
         .filter_map(|field| {
-            generate_delegatable_for_field(struct_name, field)
+            generate_delegatable_for_field(&item_struct, field)
         })
         .collect();
     quote!(#(#(#impls)*)*).into()
 }
 
-fn generate_delegatable_for_field(struct_name: &Ident,field: &Field) -> Option<Vec< proc_macro2::TokenStream>>{
+fn generate_delegatable_for_field(item_struct: &ItemStruct,field: &Field) -> Option<Vec< proc_macro2::TokenStream>>{
     field.attrs.iter().find_map(|attr|  {
         let list = match &attr.meta {
             Meta::List(list) => list,
@@ -155,12 +153,16 @@ fn generate_delegatable_for_field(struct_name: &Ident,field: &Field) -> Option<V
         if !list.path.is_ident("to") {
             return None;
         }
+        let struct_name = &item_struct.ident;
+        let struct_generic_params = &item_struct.generics.params;
+        let struct_where_clause = &item_struct.generics.where_clause;
         let trait_names = trait_names(attr)?;
         let field_name = &field.ident;
         let field_type = &field.ty;
         let impls: Vec<_> = trait_names.iter().map(|trait_name| {
             quote! {
-                impl delegare::Delegatable<<#field_type as #trait_name>::__Internal> for #struct_name {
+                impl<#struct_generic_params> delegare::Delegatable<<#field_type as #trait_name>::__Internal> 
+                    for #struct_name<#struct_generic_params> #struct_where_clause {
                     type Target = #field_type;
         
                     fn delegate_mut(&mut self) -> &mut Self::Target {
@@ -192,9 +194,5 @@ fn trait_names(attr: &Attribute) -> Option<Vec<Ident>> {
             Ok(())
         })
         .ok()?;
-    if trait_names.is_empty() {
-        None
-    } else {
-        Some(trait_names)
-    }
+    Some(trait_names)
 }

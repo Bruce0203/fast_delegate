@@ -6,4 +6,3 @@ pub trait Delegatable<T>: Sized {
     fn delegate_ref(&self) -> &Self::Target;
     fn delegate_owned(self) -> Self::Target;
 }
-

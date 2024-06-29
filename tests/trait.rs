@@ -1,5 +1,7 @@
 #![feature(associated_type_defaults)]
 
+use std::marker::PhantomData;
+
 use delegare::{delegate, Delegate};
 
 #[delegate]
@@ -22,13 +24,14 @@ where
 }
 
 #[derive(Delegate)]
-pub struct Delegated {
+pub struct Delegated<T> {
     #[to(Delegate)]
     entity: DelegateImpl,
     #[to(Delegate2)]
     entity2: Delegate2Impl,
     #[to(Delegate3<T>)]
     entity3: Delegate3Impl,
+    _marker: PhantomData<T>,
 }
 
 pub struct DelegateImpl;
@@ -52,7 +55,10 @@ impl Delegate2 for Delegate2Impl {
 }
 
 pub struct Delegate3Impl;
-impl<C: Default> Delegate3<C> for Delegate3Impl {
+impl<C> Delegate3<C> for Delegate3Impl
+where
+    C: Default,
+{
     fn run3(&mut self, value: C) {
         println!("hi");
     }
@@ -64,6 +70,7 @@ fn delegate_test() {
         entity: DelegateImpl {},
         entity2: Delegate2Impl {},
         entity3: Delegate3Impl {},
+        _marker: PhantomData::<usize>,
     };
     player.run();
     player.run2(123);
