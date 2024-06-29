@@ -17,7 +17,7 @@ members = [
 ]
 
 [dependencies]
-delegare_derive = { path = "./impl" }
+delegare_derive = { path = "./impl", version = "0.1.0" }
 
 [[bench]]
 name = "compare"
