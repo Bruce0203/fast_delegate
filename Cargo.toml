@@ -1,0 +1,19 @@
+[package]
+name = "delegare"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [
+    "impl"
+]
+
+[dependencies]
+delegare_derive = { path = "./impl" }
+
+[[bench]]
+name = "compare"
+harness = false
+
+[dev-dependencies]
+criterion = "0.5.1"
