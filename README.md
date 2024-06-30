@@ -1,7 +1,5 @@
 # delegare
 
-This library is nightly-only as it relies on `associated_type_defaults`
-
 # example of this crate
 
 ```rust
