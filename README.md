@@ -6,47 +6,33 @@
 # example of this crate
 
 ```rust
-use delegare::{delegate, Delegate};
-
 #[delegate]
-pub trait Delegate {
-    fn run(&self);
-}
-
-#[delegate]
-pub trait Delegate2 {
-    fn run2(&self);
+pub trait Read {
+    fn read(&self) -> &usize;
 }
 
 #[derive(Delegate)]
-pub struct Delegated {
-    #[to(Delegate)]
-    entity: DelegateImpl,
-    #[to(Delegate2)]
-    entity2: Delegate2Impl,
+struct Wrapper<R>
+where
+    R: Read,
+{
+    #[to(Read)]
+    inner: R,
 }
 
-pub struct DelegateImpl;
-impl Delegate for DelegateImpl {
-    fn run(&self) {
-        println!("Delegate");
+struct Io {
+    value: usize,
+}
+
+impl Read for Io {
+    fn read(&self) -> &usize {
+        &self.value
     }
 }
 
-pub struct Delegate2Impl;
-impl Delegate2 for Delegate2Impl {
-    fn run2(&self) {
-        println!("Delegate2");
-    }
-}
-
-#[test]
-fn delegate_test() {
-    let player = Delegated {
-        entity: DelegateImpl {},
-        entity2: Delegate2Impl {},
+fn main() {
+    let wrapper = Wrapper {
+        inner: Io { value: 1 },
     };
-    player.run();
-    player.run2();
-}
-```
+    wrapper.read();
+}```
