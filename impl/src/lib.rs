@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type, TypeParamBound, WhereClause, WherePredicate
+    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type, WhereClause
 };
 
 #[proc_macro_attribute]
@@ -25,12 +25,10 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
         .clone()
         .map(|v| v.predicates).unwrap_or_else(|| parse_quote!());
 
-    println!("{}", where_clause.to_token_stream().to_string());
     let generic_params_in_impl = &item_trait.generics.params;
     for param in generic_params_in_impl.iter() {
         if let GenericParam::Type(ty) = param {
             let ident = &ty.ident;
-            println!("ident: {}", ident);
             where_clause.push(parse_quote!(#ident: '__delegate_lifetime));
         }
     }
@@ -51,7 +49,6 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
     let name = &item_trait.ident;
     let delegate_generic: Ident = parse_quote!(__DelegateImpl);
-    println!("{}", where_clause.clone().into_token_stream().to_string());
     let where_clause: WhereClause = parse_quote! {
         where
             #delegate_generic: delegare::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#generic_params>>,
@@ -134,25 +131,11 @@ fn generate_delegatable_for_field(
         let struct_generic_params = &item_struct.generics.params;
         let struct_where_clause = &item_struct.generics.where_clause;
         let trait_names = attr.parse_args::<CommaSeparatedTypes>().unwrap().types;
-        println!(
-            "traits: {:?}",
-            trait_names
-                .clone()
-                .into_iter()
-                .map(|v| v.to_token_stream().to_string())
-                .collect::<Vec<_>>()
-        );
         let field_name = &field.ident;
         let field_type = &field.ty;
         let impls: Vec<_> = trait_names
             .iter()
             .map(|trait_type| {
-                match trait_type {
-                    Type::Path(t) => {
-                        println!("{:?}", t.path.to_token_stream().to_string());
-                    }
-                    _ => panic!("Provided delegate trait is not a path type."),
-                };
                 quote! {
                     impl<'__delegate_lifetime: 'static, #struct_generic_params> 
                         delegare::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #trait_type>
