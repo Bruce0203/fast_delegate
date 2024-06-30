@@ -20,7 +20,7 @@ pub trait Delegate3<C>
 where
     C: Default,
 {
-    fn run3(&mut self, value: C);
+    fn run3(&mut self, value: C) -> &usize;
 }
 
 #[derive(Delegate)]
@@ -84,8 +84,9 @@ impl<C> Delegate3<C> for Delegate3Impl<C>
 where
     C: Default,
 {
-    fn run3(&mut self, value: C) {
+    fn run3(&mut self, value: C) -> &usize {
         println!("hi");
+        &1
     }
 }
 

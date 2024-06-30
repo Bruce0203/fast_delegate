@@ -48,7 +48,7 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
     quote! {
         #item_trait
 
-        impl<'__delegate_lifetime, #delegate_generic, #generic_params> #name<#generic_params> for #delegate_generic
+        impl<'__delegate_lifetime: 'static, #delegate_generic, #generic_params> #name<#generic_params> for #delegate_generic
             #where_clause
         {
             #(#delegation_functions)*
@@ -140,7 +140,7 @@ fn generate_delegatable_for_field(
                     _ => panic!("Provided delegate trait is not a path type."),
                 };
                 quote! {
-                    impl<'__delegate_lifetime, #struct_generic_params> 
+                    impl<'__delegate_lifetime: 'static, #struct_generic_params> 
                         delegare::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #trait_type>
                         for #struct_name<#struct_generic_params> #struct_where_clause {
                         type Target = #field_type;
