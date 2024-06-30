@@ -1,5 +1,3 @@
-#![feature(associated_type_defaults)]
-
 use std::{fmt::Debug, marker::PhantomData};
 
 use delegare::{delegate, Delegate};
