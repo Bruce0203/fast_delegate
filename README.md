@@ -3,8 +3,6 @@
 # example of this crate
 
 ```rust
-#![feature(associated_type_defaults)]
-
 use delegare::{delegate, Delegate};
 
 #[delegate]
