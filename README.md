@@ -1,5 +1,8 @@
 # delegare
 
+1. Fastest than other `auto_delegate` crate 
+2. Easiest than other `deleagate` crate
+
 # example of this crate
 
 ```rust
