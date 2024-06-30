@@ -1,7 +1,7 @@
 # delegare
 
-1. Fastest than other `auto_delegate` crate 
-2. Easiest than other `deleagate` crate
+1. Faster than `auto_delegate` crate 
+2. Easier than `deleagate` crate 
 
 # example of this crate
 
