@@ -26,14 +26,28 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
         .map(|v| v.predicates).unwrap_or_else(|| parse_quote!());
 
     println!("{}", where_clause.to_token_stream().to_string());
-    let generic_params = &item_trait.generics.params;
-        for param in generic_params.iter() {
-            if let GenericParam::Type(ty) = param {
-                let ident = &ty.ident;
-                println!("ident: {}", ident);
-                where_clause.push(parse_quote!(#ident: '__delegate_lifetime));
-            }
+    let generic_params_in_impl = &item_trait.generics.params;
+    for param in generic_params_in_impl.iter() {
+        if let GenericParam::Type(ty) = param {
+            let ident = &ty.ident;
+            println!("ident: {}", ident);
+            where_clause.push(parse_quote!(#ident: '__delegate_lifetime));
         }
+    }
+
+    let mut generic_params = item_trait.generics.params.clone();
+    for param in generic_params.iter_mut() {
+        match param {
+            GenericParam::Lifetime(value) => {
+                value.bounds.clear();
+            },
+            GenericParam::Type(value) => {
+                value.bounds.clear();
+            },
+            _ => {}
+        }
+    }
+
 
     let name = &item_trait.ident;
     let delegate_generic: Ident = parse_quote!(__DelegateImpl);
@@ -48,7 +62,7 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
     quote! {
         #item_trait
 
-        impl<'__delegate_lifetime: 'static, #delegate_generic, #generic_params> #name<#generic_params> for #delegate_generic
+        impl<'__delegate_lifetime: 'static, #delegate_generic, #generic_params_in_impl> #name<#generic_params> for #delegate_generic
             #where_clause
         {
             #(#delegation_functions)*

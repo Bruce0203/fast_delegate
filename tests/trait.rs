@@ -16,9 +16,7 @@ pub trait Delegate2 {
 }
 
 #[delegate]
-pub trait Delegate3<C>
-where
-    C: Default,
+pub trait Delegate3<C: Default>
 {
     fn run3(&mut self, value: C) -> &usize;
 }
@@ -110,4 +108,35 @@ mod test {
         player.run3(123);
         crate::AnotherTrait::<usize>::asdf(&player);
     }
+}
+
+#[delegate]
+pub trait Read {
+    fn read(&self) -> &usize;
+}
+
+#[derive(Delegate)]
+struct Wrapper<R>
+where
+    R: Read,
+{
+    #[to(Read)]
+    inner: R,
+}
+
+struct Io {
+    value: usize,
+}
+
+impl Read for Io {
+    fn read(&self) -> &usize {
+        &self.value
+    }
+}
+
+fn main() {
+    let wrapper = Wrapper {
+        inner: Io { value: 1 },
+    };
+    wrapper.read();
 }
