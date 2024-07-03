@@ -25,9 +25,7 @@ pub trait A where
 }
 
 #[derive(Delegate)]
-pub struct Delegated<T>
-where
-    T: Default,
+pub struct Delegated<T: Default>
 {
     #[to(Delegate, AnotherTrait<T>, SomeTrait, Delegate2)]
     entity: DelegateImpl,
@@ -68,11 +66,13 @@ impl Delegate for DelegateImpl {
 
 impl Delegate2 for DelegateImpl {
     fn run2(&self, value: usize) -> usize {
-        todo!()
+        println!("run2");
+        2
     }
 
     fn run2_mut(&mut self, value: usize) -> usize {
-        todo!()
+        println!("run2 mut");
+        1
     }
 }
 

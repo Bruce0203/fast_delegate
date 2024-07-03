@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type, WhereClause
+    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, token::Comma, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type, WhereClause
 };
 
 #[proc_macro_attribute]
@@ -128,7 +128,9 @@ fn generate_delegatable_for_field(
             return None;
         }
         let struct_name = &item_struct.ident;
-        let struct_generic_params = &item_struct.generics.params;
+        let struct_generic_params_in_impl = &item_struct.generics.params;
+        let mut struct_generic_params = struct_generic_params_in_impl.clone();
+        detach_bounds_from_generic(&mut struct_generic_params);
         let struct_where_clause = &item_struct.generics.where_clause;
         let trait_names = attr.parse_args::<CommaSeparatedTypes>().unwrap().types;
         let field_name = &field.ident;
@@ -137,7 +139,7 @@ fn generate_delegatable_for_field(
             .iter()
             .map(|trait_type| {
                 quote! {
-                    impl<'__delegate_lifetime: 'static, #struct_generic_params> 
+                    impl<'__delegate_lifetime: 'static, #struct_generic_params_in_impl> 
                         delegare::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #trait_type>
                         for #struct_name<#struct_generic_params> #struct_where_clause {
                         type Target = #field_type;
@@ -171,4 +173,19 @@ impl Parse for CommaSeparatedTypes {
             types: input.parse_terminated(Type::parse, Token![,])?,
         })
     }
+}
+
+
+fn detach_bounds_from_generic( params: &mut Punctuated<GenericParam, Comma>) {
+    for param in params.iter_mut() {
+        match param {
+            GenericParam::Lifetime(value) => {
+                value.bounds.clear()
+            },
+            GenericParam::Type(value) => {
+                value.bounds.clear()
+            },                
+            _ => {}
+        }
+    };
 }
