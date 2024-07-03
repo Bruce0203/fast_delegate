@@ -35,4 +35,9 @@ fn main() {
         inner: Io { value: 1 },
     };
     wrapper.read();
-}```
+}
+```
+
+# known issue warning
+All delegatable traits must be [object safe](https://doc.rust-lang.org/reference/items/traits.html#object-safety).
+

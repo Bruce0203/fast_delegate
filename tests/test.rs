@@ -20,6 +20,7 @@ mod user_defined_impls_0 {
         fn run3(&self);
     }
 
+    #[derive(Default)]
     pub struct Delegate;
 
     impl<T> MyTrait<T> for Delegate {
