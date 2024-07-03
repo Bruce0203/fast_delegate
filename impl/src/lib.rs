@@ -87,7 +87,7 @@ fn generate_delegation_function(f: &TraitItemFn) -> Option<TraitItem> {
     Some(TraitItem::Fn(parse_quote! {
         #[inline(always)]
         #sig {
-            self.#delegate_fn_ident().#name(#(#inputs_variables)*)
+            self.#delegate_fn_ident().#name(#(#inputs_variables),*)
         }
     }))
 }

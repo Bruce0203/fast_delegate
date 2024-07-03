@@ -14,9 +14,14 @@ pub trait Delegate2 {
 }
 
 #[delegate]
-pub trait Delegate3<C: Default>
+pub trait Delegate3<C: Default> {
+    fn run3(&mut self, value: C, value2: i32) -> &usize;
+}
+
+#[delegate]
+pub trait A where
+    Self: Delegate2,
 {
-    fn run3(&mut self, value: C) -> &usize;
 }
 
 #[derive(Delegate)]
@@ -24,9 +29,8 @@ pub struct Delegated<T>
 where
     T: Default,
 {
-    #[to(Delegate, AnotherTrait<T>, SomeTrait)]
+    #[to(Delegate, AnotherTrait<T>, SomeTrait, Delegate2)]
     entity: DelegateImpl,
-    #[to(Delegate2)]
     entity2: Delegate2Impl,
     #[to(Delegate3<T>)]
     entity3: Delegate3Impl<T>,
@@ -62,6 +66,16 @@ impl Delegate for DelegateImpl {
     }
 }
 
+impl Delegate2 for DelegateImpl {
+    fn run2(&self, value: usize) -> usize {
+        todo!()
+    }
+
+    fn run2_mut(&mut self, value: usize) -> usize {
+        todo!()
+    }
+}
+
 pub struct Delegate2Impl;
 impl Delegate2 for Delegate2Impl {
     fn run2(&self, value: usize) -> usize {
@@ -80,7 +94,7 @@ impl<C> Delegate3<C> for Delegate3Impl<C>
 where
     C: Default,
 {
-    fn run3(&mut self, value: C) -> &usize {
+    fn run3(&mut self, value: C, value2: i32) -> &usize {
         println!("hi");
         &1
     }
@@ -103,7 +117,7 @@ mod test {
         };
         player.run();
         player.run2(123);
-        player.run3(123);
+        player.run3(123, 1);
         crate::AnotherTrait::<usize>::asdf(&player);
     }
 }
