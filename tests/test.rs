@@ -16,7 +16,7 @@ mod user_defined_impls_0 {
         fn run2(&self);
     }
 
-    pub trait MyTrait3 {
+    pub trait MyTrait3: MyTrait2 {
         fn run3(&self);
     }
 
@@ -72,7 +72,7 @@ mod macro_generated_impls {
 
     impl<'a, DelegateImpl> MyTrait3 for DelegateImpl
     where
-        DelegateImpl: Delegatable<'a, &'a dyn MyTrait3>,
+        DelegateImpl: Delegatable<'a, &'a dyn MyTrait3> + MyTrait2,
         DelegateImpl::Target: MyTrait3,
     {
         fn run3(&self) {

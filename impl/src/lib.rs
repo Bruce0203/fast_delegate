@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, token::Comma, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type, WhereClause
+    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, token::Comma, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type, TypeParamBound, WhereClause
 };
 
 #[proc_macro_attribute]
@@ -34,32 +34,30 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let mut generic_params = item_trait.generics.params.clone();
-    for param in generic_params.iter_mut() {
-        match param {
-            GenericParam::Lifetime(value) => {
-                value.bounds.clear();
-            },
-            GenericParam::Type(value) => {
-                value.bounds.clear();
-            },
-            _ => {}
-        }
-    }
-
 
     let name = &item_trait.ident;
     let delegate_generic: Ident = parse_quote!(__DelegateImpl);
-    let where_clause: WhereClause = parse_quote! {
-        where
-            #delegate_generic: delegare::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#generic_params>>,
-            #delegate_generic::Target: #name<#generic_params>,
-            #where_clause
-
+    detach_bounds_from_generic(&mut generic_params);
+    let mut delegate_generic_bound: Punctuated<GenericParam, Comma> = parse_quote! {
+        #delegate_generic: delegare::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#generic_params>>,
     };
+    let delegate_generic_param = match delegate_generic_bound.first_mut().unwrap() {
+        GenericParam::Type(value) => {
+            value
+        },
+        _ => unreachable!()
+    };
+
+    for bound in item_trait.supertraits.iter() {
+        delegate_generic_param.bounds.push(bound.clone());
+    }
     quote! {
         #item_trait
 
         impl<'__delegate_lifetime: 'static, #delegate_generic, #generic_params_in_impl> #name<#generic_params> for #delegate_generic
+        where
+            #delegate_generic_bound
+            #delegate_generic::Target: #name<#generic_params>,
             #where_clause
         {
             #(#delegation_functions)*

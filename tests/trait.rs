@@ -14,20 +14,18 @@ pub trait Delegate2 {
 }
 
 #[delegate]
-pub trait Delegate3<C: Default> {
+pub trait Delegate3<C> {
     fn run3(&mut self, value: C, value2: i32) -> &usize;
 }
 
 #[delegate]
-pub trait A where
-    Self: Delegate2,
-{
+pub trait Delegate4: Delegate {
+    fn qwerqwer(&self);
 }
 
 #[derive(Delegate)]
-pub struct Delegated<T: Default>
-{
-    #[to(Delegate, AnotherTrait<T>, SomeTrait, Delegate2)]
+pub struct Delegated<T> {
+    #[to(Delegate, AnotherTrait<T>, SomeTrait, Delegate2, Delegate4)]
     entity: DelegateImpl,
     entity2: Delegate2Impl,
     #[to(Delegate3<T>)]
@@ -61,6 +59,12 @@ pub struct DelegateImpl;
 impl Delegate for DelegateImpl {
     fn run(&self) {
         println!("Delegate");
+    }
+}
+
+impl Delegate4 for DelegateImpl {
+    fn qwerqwer(&self) {
+        println!("qwerqwer");
     }
 }
 

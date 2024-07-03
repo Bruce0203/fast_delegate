@@ -1,7 +1,11 @@
 # delegare
 
-1. Faster than `auto_delegate` crate 
-2. Easier than `deleagate` crate 
+**Pros**
+* Faster than `auto_delegate` crate 
+* Easier than `deleagate` crate 
+
+**Cons**
+* All delegatable traits must be [object safe](https://doc.rust-lang.org/reference/items/traits.html#object-safety).
 
 # example of this crate
 
@@ -37,7 +41,4 @@ fn main() {
     wrapper.read();
 }
 ```
-
-# known issue warning
-All delegatable traits must be [object safe](https://doc.rust-lang.org/reference/items/traits.html#object-safety).
 
