@@ -1,6 +1,6 @@
 use std::{fmt::Debug, marker::PhantomData};
 
-use delegare::{delegate, Delegate};
+use fast_delegate::{delegate, Delegate};
 
 #[delegate]
 pub trait Delegate {
@@ -140,6 +140,15 @@ where
     inner: R,
 }
 
+#[derive(Delegate)]
+struct WrapperWrapper<R>
+where
+    R: Read,
+{
+    #[to(Read)]
+    inner: Wrapper<R>,
+}
+
 struct Io {
     value: usize,
 }
@@ -151,8 +160,11 @@ impl Read for Io {
 }
 
 fn main() {
-    let wrapper = Wrapper {
-        inner: Io { value: 1 },
+    let wrapper = WrapperWrapper {
+        inner: Wrapper {
+            inner: Io { value: 1 },
+        },
     };
+
     wrapper.read();
 }

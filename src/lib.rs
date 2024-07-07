@@ -1,4 +1,4 @@
-pub use delegare_derive::*;
+pub use fast_delegate_derive::*;
 
 pub trait Delegatable<'a, T>: Sized {
     type Target;

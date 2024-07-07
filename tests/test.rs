@@ -8,6 +8,8 @@ mod core_libs {
 mod user_defined_impls_0 {
     use std::marker::PhantomData;
 
+    use fast_delegate::Delegatable;
+
     pub trait MyTrait<T> {
         fn run(&self);
     }

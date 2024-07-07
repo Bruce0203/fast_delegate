@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, token::Comma, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type, TypeParamBound, WhereClause
+    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, token::Comma, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type
 };
 
 #[proc_macro_attribute]
@@ -39,7 +39,7 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let delegate_generic: Ident = parse_quote!(__DelegateImpl);
     detach_bounds_from_generic(&mut generic_params);
     let mut delegate_generic_bound: Punctuated<GenericParam, Comma> = parse_quote! {
-        #delegate_generic: delegare::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#generic_params>>,
+        #delegate_generic: fast_delegate::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#generic_params>>,
     };
     let delegate_generic_param = match delegate_generic_bound.first_mut().unwrap() {
         GenericParam::Type(value) => {
@@ -138,7 +138,7 @@ fn generate_delegatable_for_field(
             .map(|trait_type| {
                 quote! {
                     impl<'__delegate_lifetime: 'static, #struct_generic_params_in_impl> 
-                        delegare::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #trait_type>
+                        fast_delegate::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #trait_type>
                         for #struct_name<#struct_generic_params> #struct_where_clause {
                         type Target = #field_type;
 

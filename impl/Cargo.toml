@@ -1,5 +1,5 @@
 [package]
-name = "delegare_derive"
+name = "fast_delegate_derive"
 version.workspace = true  
 edition.workspace = true
 author.workspace = true 

@@ -1,4 +1,4 @@
-# delegare
+# `fast_delegate`
 
 **Pros**
 * Faster than `auto_delegate` crate 
