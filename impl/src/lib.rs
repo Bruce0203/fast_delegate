@@ -1,7 +1,13 @@
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, spanned::Spanned, token::Comma, Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn, Type
+    parse::{Parse, ParseStream},
+    parse_macro_input, parse_quote,
+    punctuated::Punctuated,
+    spanned::Spanned,
+    token::Comma,
+    Field, FnArg, GenericParam, Ident, ItemStruct, ItemTrait, Meta, Token, TraitItem, TraitItemFn,
+    Type,
 };
 
 #[proc_macro_attribute]
@@ -11,11 +17,12 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let delegation_functions: Vec<_> = item_trait
         .items
         .iter()
-        .map(|trait_item| match trait_item {
+        .filter_map(|trait_item| match trait_item {
             syn::TraitItem::Fn(f) => {
-                generate_delegation_function(f).unwrap_or_else(|| trait_item.clone())
+                Some(generate_delegation_function(f).unwrap_or_else(|| trait_item.clone()))
             }
-            item => item.clone(),
+            syn::TraitItem::Type(_) => None,
+            item => Some(item.clone()),
         })
         .collect();
 
@@ -23,7 +30,8 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
         .generics
         .where_clause
         .clone()
-        .map(|v| v.predicates).unwrap_or_else(|| parse_quote!());
+        .map(|v| v.predicates)
+        .unwrap_or_else(|| parse_quote!());
 
     let generic_params_in_impl = &item_trait.generics.params;
     for param in generic_params_in_impl.iter() {
@@ -33,19 +41,49 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
         }
     }
 
+    let associated_types_in_generic: Vec<_> = item_trait
+        .items
+        .iter()
+        .filter_map(|item| match item {
+            TraitItem::Type(ty) => {
+                if ty.default.is_some() {
+                    None
+                } else {
+                    let ty_ident = &ty.ident;
+                    Some(quote! {#ty_ident = (), })
+                }
+            }
+            _ => None,
+        })
+        .collect();
+
+    let associated_types: Vec<_> = item_trait
+        .items
+        .iter()
+        .filter_map(|item| match item {
+            TraitItem::Type(ty) => {
+                if ty.default.is_some() {
+                    None
+                } else {
+                    let ty_ident = &ty.ident;
+                    Some(quote! {type #ty_ident = ();})
+                }
+            }
+            _ => None,
+        })
+        .collect();
+
     let mut generic_params = item_trait.generics.params.clone();
 
     let name = &item_trait.ident;
     let delegate_generic: Ident = parse_quote!(__DelegateImpl);
     detach_bounds_from_generic(&mut generic_params);
     let mut delegate_generic_bound: Punctuated<GenericParam, Comma> = parse_quote! {
-        #delegate_generic: fast_delegate::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#generic_params>>,
+        #delegate_generic: fast_delegate::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#(#associated_types_in_generic)*#generic_params>>,
     };
     let delegate_generic_param = match delegate_generic_bound.first_mut().unwrap() {
-        GenericParam::Type(value) => {
-            value
-        },
-        _ => unreachable!()
+        GenericParam::Type(value) => value,
+        _ => unreachable!(),
     };
 
     for bound in item_trait.supertraits.iter() {
@@ -60,6 +98,7 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
             #delegate_generic::Target: #name<#generic_params>,
             #where_clause
         {
+            #(#associated_types)*
             #(#delegation_functions)*
         }
     }
@@ -137,7 +176,7 @@ fn generate_delegatable_for_field(
             .iter()
             .map(|trait_type| {
                 quote! {
-                    impl<'__delegate_lifetime: 'static, #struct_generic_params_in_impl> 
+                    impl<'__delegate_lifetime: 'static, #struct_generic_params_in_impl>
                         fast_delegate::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #trait_type>
                         for #struct_name<#struct_generic_params> #struct_where_clause {
                         type Target = #field_type;
@@ -173,17 +212,12 @@ impl Parse for CommaSeparatedTypes {
     }
 }
 
-
-fn detach_bounds_from_generic( params: &mut Punctuated<GenericParam, Comma>) {
+fn detach_bounds_from_generic(params: &mut Punctuated<GenericParam, Comma>) {
     for param in params.iter_mut() {
         match param {
-            GenericParam::Lifetime(value) => {
-                value.bounds.clear()
-            },
-            GenericParam::Type(value) => {
-                value.bounds.clear()
-            },                
+            GenericParam::Lifetime(value) => value.bounds.clear(),
+            GenericParam::Type(value) => value.bounds.clear(),
             _ => {}
         }
-    };
+    }
 }
