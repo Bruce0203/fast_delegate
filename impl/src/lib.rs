@@ -74,12 +74,20 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
         .collect();
 
     let mut generic_params = item_trait.generics.params.clone();
+    detach_bounds_from_generic(&mut generic_params);
+    //convert <const N: usize> to <N>
+    let generic_params: Vec<_> = generic_params
+        .iter()
+        .map(|param| match param {
+            GenericParam::Const(value) => value.ident.to_token_stream(),
+            other => other.to_token_stream(),
+        })
+        .collect();
 
     let name = &item_trait.ident;
     let delegate_generic: Ident = parse_quote!(__DelegateImpl);
-    detach_bounds_from_generic(&mut generic_params);
     let mut delegate_generic_bound: Punctuated<GenericParam, Comma> = parse_quote! {
-        #delegate_generic: fast_delegate::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#(#associated_types_in_generic)*#generic_params>>,
+        #delegate_generic: fast_delegate::Delegatable<'__delegate_lifetime, &'__delegate_lifetime dyn #name<#(#associated_types_in_generic)*#(#generic_params)*>>,
     };
     let delegate_generic_param = match delegate_generic_bound.first_mut().unwrap() {
         GenericParam::Type(value) => value,
@@ -92,10 +100,10 @@ pub fn delegate(_attr: TokenStream, input: TokenStream) -> TokenStream {
     quote! {
         #item_trait
 
-        impl<'__delegate_lifetime: 'static, #delegate_generic, #generic_params_in_impl> #name<#generic_params> for #delegate_generic
+        impl<'__delegate_lifetime: 'static, #delegate_generic, #generic_params_in_impl> #name<#(#generic_params)*> for #delegate_generic
         where
             #delegate_generic_bound
-            #delegate_generic::Target: #name<#generic_params>,
+            #delegate_generic::Target: #name<#(#generic_params)*>,
             #where_clause
         {
             #(#associated_types)*

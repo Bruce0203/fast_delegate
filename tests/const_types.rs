@@ -3,22 +3,19 @@ use fast_delegate::{delegate, Delegate};
 struct DelegateImpl;
 
 #[delegate]
-trait Delegate {
-    type E;
+trait Delegating<const N: usize> {
     fn do_it(&self);
 }
 
-impl Delegate for DelegateImpl {
+impl<const N: usize> Delegating<N> for DelegateImpl {
     fn do_it(&self) {
         println!("hi2");
     }
-
-    type E = usize;
 }
 
 #[derive(Delegate)]
 struct Delegated {
-    #[to(Delegate<E = ()>)]
+    #[to(Delegating<1>)]
     value: DelegateImpl,
 }
 
