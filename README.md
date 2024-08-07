@@ -6,6 +6,7 @@
 
 **Cons**
 * All delegatable traits must be [object safe](https://doc.rust-lang.org/reference/items/traits.html#object-safety).
+* You can't use delegate with const or type in trait 
 
 # example of this crate
 
